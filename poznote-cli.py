@@ -9,7 +9,7 @@ Linux terminal via pipes and flags.
 INPUT EXPECTATIONS:
 - This script EXPECTS piped input for Posting and Updating.
 - Advanced Feature (-c) allows posting directly from the clipboard.
-- Example: `ls -la | poznote` or `poznote -c`
+- Example: `ls -la | poznote-cli.py` or `poznote-cli.py -c`
 
 CONFIGURATION:
 - Requires a file at ~/.poznote.conf with:
@@ -219,6 +219,8 @@ def post_to_poznote(tags=None, from_clipboard=False, show_delete=False, show_upd
         print(f"To update this note run: [command] | {script_name} -U {note_id}")
 
     if burn and note_id:
+        # I am leaving intentionally the emoji of fire because it actually looks cool. 
+        # Even thought it might look like vibe code
         print(f"\n🔥 BURN MODE: Note will be deleted from {workspace} when you proceed.")
         try:
             with open('/dev/tty', 'r') as tty:
@@ -232,8 +234,11 @@ def post_to_poznote(tags=None, from_clipboard=False, show_delete=False, show_upd
 if __name__ == "__main__":
     _, _, _, _, workspace, adv_feat = get_config()
 
+    # Define help text or suppress based on Advanced Features toggle
     l_help = "List the most recent note" if adv_feat else argparse.SUPPRESS
     s_help = "Search notes by keyword" if adv_feat else argparse.SUPPRESS
+    D_help = "Delete a specific note by ID" if adv_feat else argparse.SUPPRESS
+    U_help = "Update a specific note by ID" if adv_feat else argparse.SUPPRESS
 
     parser = argparse.ArgumentParser(
         description="Poznote CLI Tool: Post, update, or delete notes from the terminal.",
@@ -246,19 +251,24 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--tags", help="Comma-separated tags")
     parser.add_argument("-c", "--clipboard", action="store_true", help="Post content from clipboard")
     parser.add_argument("--debug", action="store_true", help="Display equivalent curl command")
-    parser.add_argument("-D", "--delete", metavar="ID", help="Delete a specific note by ID")
-    parser.add_argument("-U", "--update", metavar="ID", help="Update a specific note by ID")
+    
+    # Advanced Features (Hidden/Suppressed if adv_feat is False)
+    parser.add_argument("-D", "--delete", metavar="ID", help=D_help)
+    parser.add_argument("-U", "--update", metavar="ID", help=U_help)
     parser.add_argument("-L", "--last", action="store_true", help=l_help)
     parser.add_argument("-s", "--search", metavar="QUERY", help=s_help)
     
     args = parser.parse_args()
 
+    # Guard clause: Prevent execution of advanced features if disabled in config
+    if any([args.last, args.search, args.delete, args.update]) and not adv_feat:
+        print("Error: Advanced features are disabled in ~/.poznote.conf")
+        sys.exit(12)
+
     if args.last:
-        if adv_feat: list_last_note(debug=args.debug)
-        else: sys.exit(12)
+        list_last_note(debug=args.debug)
     elif args.search:
-        if adv_feat: search_notes(args.search, debug=args.debug)
-        else: sys.exit(12)
+        search_notes(args.search, debug=args.debug)
     elif args.delete:
         delete_note(args.delete, debug=args.debug)
     elif args.update:

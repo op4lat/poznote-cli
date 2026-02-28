@@ -1,3 +1,27 @@
+# Poznote Configuration
+# Protects your actual credentials if they are stored in the project root
 .poznote.conf
 .env
+.env.local
+
+# Do NOT ignore the template
+!_poznote.conf
+
+# Python environment & cache
 __pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+
+# Distribution / Build
+# Prevents accidental commits of packaging artifacts
+dist/
+build/
+*.egg-info/
+
+# OS specific files
+# Keeps system-generated metadata out of your clean repo
+.DS_Store
+Thumbs.db
